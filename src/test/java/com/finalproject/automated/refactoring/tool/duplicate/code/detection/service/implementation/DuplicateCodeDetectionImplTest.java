@@ -36,6 +36,7 @@ public class DuplicateCodeDetectionImplTest {
 
     private static final Integer FIRST_INDEX = 0;
     private static final Integer SECOND_INDEX = 1;
+    private static final String KEY = "/path";
     private static final Integer EMPTY_COUNT = 0;
     private static final Integer ONCE_INVOCATION = 1;
 
@@ -49,9 +50,9 @@ public class DuplicateCodeDetectionImplTest {
     public void setUp() {
         methodModels = createMethodModels();
 
-        when(locsDetection.llocDetection(eq(methodModels.get(FIRST_INDEX).get(FIRST_INDEX).getBody())))
+        when(locsDetection.llocDetection(eq(methodModels.get(KEY).get(FIRST_INDEX).getBody())))
                 .thenReturn(FIRST_INDEX_LOC);
-        when(locsDetection.llocDetection(eq(methodModels.get(FIRST_INDEX).get(SECOND_INDEX).getBody())))
+        when(locsDetection.llocDetection(eq(methodModels.get(KEY).get(SECOND_INDEX).getBody())))
                 .thenReturn(SECOND_INDEX_LOC);
     }
 
