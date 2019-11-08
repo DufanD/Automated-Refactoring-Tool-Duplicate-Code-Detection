@@ -5,6 +5,7 @@ import com.finalproject.automated.refactoring.tool.model.MethodModel;
 import lombok.NonNull;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dufan Quraish
@@ -14,7 +15,5 @@ import java.util.List;
 
 public interface DuplicateCodeDetection {
 
-    List<ClonePair> detect(@NonNull MethodModel methodModel, @NonNull Long threshold);
-
-    List<ClonePair> detect(@NonNull List<MethodModel> methodModels, @NonNull Long threshold);
+    Map<String, List<ClonePair>> detect(@NonNull Map<String, List<MethodModel>> methodModels, @NonNull Long threshold);
 }
