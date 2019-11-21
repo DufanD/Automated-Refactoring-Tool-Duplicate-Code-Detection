@@ -80,7 +80,7 @@ public class DuplicateCodeDetectionImpl implements DuplicateCodeDetection {
 
         if (threshold < maxRange) {
             List<ClonePair> merged = new ArrayList<>(findClonePair(cloneCandidates));
-            merged.addAll(findCandidates(methodModels, threshold++));
+            merged.addAll(findCandidates(methodModels, threshold + 1));
             return merged;
         }
         else
@@ -90,6 +90,7 @@ public class DuplicateCodeDetectionImpl implements DuplicateCodeDetection {
     private List<ClonePair> findClonePair(List<CloneCandidate> cloneCandidates) {
         return  cloneCandidates.parallelStream()
                     .map(cloneCandidate -> comparingCandidates(cloneCandidate, cloneCandidates))
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
     }
 

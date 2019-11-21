@@ -27,7 +27,7 @@ public class DuplicateCodeAnalyzerImpl implements DuplicateCodeAnalyzer {
         listSplitedString2 = filterIdentifier(listSplitedString2);
 
         for (int i = 0; i < listSplitedString1.size(); i++) {
-            N_UNIQ = TOTAL_UPI = 0;
+            N_UNIQ = 0;
             List<String> splitedString1 = listSplitedString1.get(i);
             List<String> splitedString2 = listSplitedString2.get(i);
 
@@ -39,7 +39,7 @@ public class DuplicateCodeAnalyzerImpl implements DuplicateCodeAnalyzer {
                         } else {
                             N_UNIQ += 2;
                         }
-                    } else if (splitedString1.get(j).equals(splitedString2)) {
+                    } else if (!splitedString1.get(j).equals(splitedString2.get(j))) {
                         N_UNIQ++;
                     }
                 }
