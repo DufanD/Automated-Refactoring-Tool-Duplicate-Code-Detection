@@ -20,7 +20,8 @@ public class DuplicateCodeAnalyzerImpl implements DuplicateCodeAnalyzer {
 
     @Override
     public float analysis(List<List<String>> listSplitedString1, List<List<String>> listSplitedString2) {
-        int N_UNIQ, TOTAL_UPI = 0;
+        int N_UNIQ;
+        float TOTAL_UPI = 0;
         int ABSOLUTE_UNIQ = 1;
 
         listSplitedString1 = filterIdentifier(listSplitedString1);
@@ -53,7 +54,11 @@ public class DuplicateCodeAnalyzerImpl implements DuplicateCodeAnalyzer {
     }
 
     private float upiFormula(int nUniq, int nWord) {
-        return nUniq / nWord;
+        return (float) nUniq / (float) nWord;
+    }
+
+    private float upiFormula(float nUniq, int nWord) {
+        return nUniq / (float) nWord;
     }
 
     private List<List<String>> filterIdentifier(List<List<String>> listSplitedString) {
