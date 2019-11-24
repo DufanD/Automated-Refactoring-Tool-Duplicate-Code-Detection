@@ -74,17 +74,17 @@ public class DuplicateCodeAnalyzerImpl implements DuplicateCodeAnalyzer {
     }
 
     private boolean checkValue(String text1, String text2) {
-        text1.replace(";", "");
-        text2.replace(";", "");
+        text1 = text1.replace(";", "");
+        text2 = text2.replace(";", "");
         return Double.parseDouble(text1) == Double.parseDouble(text2);
     }
 
     private boolean containsType(String text) {
-        return containsIntegralType(text) || containsCharType(text) || containsBooleanType(text);
+        return text.contains("=") && (containsIntegralType(text) || containsCharType(text) || containsBooleanType(text));
     }
 
     private boolean containsIntegralType(String text) {
-        return integralType.stream().filter(type -> text.contains(type)).count() > 1;
+        return integralType.stream().filter(type -> text.contains(type)).count() >= 1;
     }
 
     private boolean containsCharType(String text) {

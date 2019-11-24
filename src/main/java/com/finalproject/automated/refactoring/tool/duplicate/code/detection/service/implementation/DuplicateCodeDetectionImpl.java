@@ -123,7 +123,7 @@ public class DuplicateCodeDetectionImpl implements DuplicateCodeDetection {
         List<List<String>> listSplitedString = new ArrayList<>();
 
         for (StatementModel statementModel : cloneCandidate.getStatements()) {
-            List<String> splitString = Arrays.asList(statementModel.getStatement().split("[=;({]"));
+            List<String> splitString = Arrays.asList(statementModel.getStatement().split("(?<=[=;({])"));
             listSplitedString.add(splitString);
         }
         return listSplitedString;
