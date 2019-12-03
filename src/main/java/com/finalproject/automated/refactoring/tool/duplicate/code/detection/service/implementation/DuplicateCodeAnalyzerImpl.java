@@ -76,7 +76,12 @@ public class DuplicateCodeAnalyzerImpl implements DuplicateCodeAnalyzer {
     private boolean checkValue(String text1, String text2) {
         text1 = text1.replace(";", "");
         text2 = text2.replace(";", "");
-        return Double.parseDouble(text1) == Double.parseDouble(text2);
+
+        try {
+            return Double.parseDouble(text1) == Double.parseDouble(text2);
+        } catch (Exception e) {
+            return text1 == text2;
+        }
     }
 
     private boolean containsType(String text) {
