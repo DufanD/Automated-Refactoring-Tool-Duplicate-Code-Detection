@@ -187,6 +187,10 @@ public class DuplicateCodeAnalyzerImpl implements DuplicateCodeAnalyzer {
         float TOTAL_UPI = 0;
         int ABSOLUTE_UNIQ = 1;
 
+        if (blockModel1.getStatements().size() != blockModel2.getStatements().size()) {
+            return 1;
+        }
+
         for (int i = 0; i < blockModel1.getStatements().size(); i++) {
             if (checkBothBlockFromBlock(blockModel1, blockModel2, i)) {
                 TOTAL_UPI += checkBodyBlock(

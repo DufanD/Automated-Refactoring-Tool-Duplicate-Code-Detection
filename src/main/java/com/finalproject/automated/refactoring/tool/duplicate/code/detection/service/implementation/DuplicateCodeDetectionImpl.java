@@ -164,9 +164,11 @@ public class DuplicateCodeDetectionImpl implements DuplicateCodeDetection {
     }
 
     private Boolean isDuplicate(CloneCandidate cloneCandidate1, CloneCandidate cloneCandidate2) {
-        List<List<String>> listSplitedString1 = transformToText(cloneCandidate1);
-        List<List<String>> listSplitedString2 = transformToText(cloneCandidate2);
-        return duplicateCodeAnalyzer.analysis(listSplitedString1, listSplitedString2) < thresholdUniqness;
+//        List<List<String>> listSplitedString1 = transformToText(cloneCandidate1);
+//        List<List<String>> listSplitedString2 = transformToText(cloneCandidate2);
+//        return duplicateCodeAnalyzer.analysis(listSplitedString1, listSplitedString2) < thresholdUniqness;
+
+        return duplicateCodeAnalyzer.analysis(cloneCandidate1, cloneCandidate2) < thresholdUniqness;
     }
 
     private List<List<String>> transformToText(CloneCandidate cloneCandidate) {
