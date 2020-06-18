@@ -133,6 +133,16 @@ public class DuplicateCodeDetectionImpl implements DuplicateCodeDetection {
                 .build();
     }
 
+    private CloneCandidate buildNewCandidateBlock(BlockModel blockModel, MethodModel methodModel,
+                                             String path, int CURRENT_INDEX, int NEXT_INDEX) {
+        return CloneCandidate.builder()
+                .methodModel(methodModel)
+                .statements(blockModel.getStatements().subList(CURRENT_INDEX, NEXT_INDEX))
+                .path(path)
+                .flag(0)
+                .build();
+    }
+
     private List<ClonePair> filterClonePairMemberCount(List<ClonePair> clonePairs) {
         return clonePairs.stream()
                 .filter(clonePair -> clonePair.getCloneCandidates().size() > 2)
@@ -171,7 +181,7 @@ public class DuplicateCodeDetectionImpl implements DuplicateCodeDetection {
         int NEXT_INDEX = CURRENT_INDEX + RANGE;
 
         while (NEXT_INDEX <= blockModel.getStatements().size()) {
-            cloneCandidate = buildNewCandidate(methodModel, path, CURRENT_INDEX, NEXT_INDEX);
+            cloneCandidate = buildNewCandidateBlock(blockModel, methodModel, path, CURRENT_INDEX, NEXT_INDEX);
             cloneCandidates.add(cloneCandidate);
             CURRENT_INDEX++;
             NEXT_INDEX = CURRENT_INDEX + RANGE;
