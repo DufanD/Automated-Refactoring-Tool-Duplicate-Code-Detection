@@ -30,6 +30,8 @@ public class DuplicateCodeDetectionImpl implements DuplicateCodeDetection {
     @Autowired
     private DuplicateCodeAnalyzer duplicateCodeAnalyzer;
 
+    int INITIAL_INDEX = 0;
+
     private int maxRange = 0;
 
     private float thresholdUniqness = 0.3f;
@@ -43,7 +45,7 @@ public class DuplicateCodeDetectionImpl implements DuplicateCodeDetection {
                 .forEach(entry -> {
                     entry.getValue().parallelStream().map(this::detectLoc);
                     setMaxRange(entry.getValue());
-                    clonePairs.put(entry.getKey(), findCandidates(entry.getValue(), threshold));
+                    clonePairs.put(entry.getKey(), findCandidates(entry, threshold));
                 })
         ;
 
@@ -57,74 +59,124 @@ public class DuplicateCodeDetectionImpl implements DuplicateCodeDetection {
         }
     }
 
-    private List<ClonePair> findCandidates(List<MethodModel> methodModels, Long threshold) {
-        int INITIAL_INDEX = 0;
+    private List<ClonePair> findCandidates(Map.Entry<String, List<MethodModel>> entry, Long threshold) {
+        List<MethodModel> methodModels = entry.getValue();
         List<CloneCandidate> cloneCandidates = new ArrayList<>();
+        CloneCandidate cloneCandidate;
 
-       for (MethodModel methodModel : methodModels) {
+        for (MethodModel methodModel : methodModels) {
             int CURRENT_INDEX = INITIAL_INDEX;
             int RANGE = threshold.intValue();
             int NEXT_INDEX = CURRENT_INDEX + RANGE;
 
             while (NEXT_INDEX <= methodModel.getStatements().size()) {
-                CloneCandidate cloneCandidate = CloneCandidate.builder()
-                        .methodModel(methodModel)
-                        .statements(methodModel.getStatements().subList(CURRENT_INDEX, NEXT_INDEX))
-                        .flag(0)
-                        .build();
+                cloneCandidate = buildNewCandidate(methodModel, entry.getKey(), CURRENT_INDEX, NEXT_INDEX);
                 cloneCandidates.add(cloneCandidate);
                 CURRENT_INDEX++;
                 NEXT_INDEX = CURRENT_INDEX + RANGE;
             }
-           cloneCandidates.addAll(findCandidateFromBlocksOuter(methodModel, threshold));
+            cloneCandidates.addAll(findCandidateFromBlocksOuter(methodModel, entry.getKey(), threshold));
         }
 
         if (threshold < maxRange) {
             List<ClonePair> merged = new ArrayList<>(findClonePair(cloneCandidates));
-            merged.addAll(findCandidates(methodModels, threshold + 1));
+            merged.addAll(findCandidates(entry, threshold + 1));
             return merged;
         }
         else
             return findClonePair(cloneCandidates);
     }
 
-    private List<CloneCandidate> findCandidateFromBlocksOuter(MethodModel methodModel, Long threshold) {
+    private List<ClonePair> findCandidatesBetweenClass(Map.Entry<String, List<MethodModel>> entry, Long threshold,
+                                                       Map<String, List<MethodModel>> files) {
+        List<CloneCandidate> cloneCandidates = new ArrayList<>();
+        CloneCandidate cloneCandidate;
+        int fileFlag = 0;
+
+        for (String key : files.keySet()) {
+            if (key.equals(entry.getKey()) || fileFlag == 1) {
+                List<MethodModel> methodModels = entry.getValue();
+
+                for (MethodModel methodModel : methodModels) {
+                    int CURRENT_INDEX = INITIAL_INDEX;
+                    int RANGE = threshold.intValue();
+                    int NEXT_INDEX = CURRENT_INDEX + RANGE;
+
+                    while (NEXT_INDEX <= methodModel.getStatements().size()) {
+                        cloneCandidate = buildNewCandidate(methodModel, key, CURRENT_INDEX, NEXT_INDEX);
+                        cloneCandidates.add(cloneCandidate);
+                        CURRENT_INDEX++;
+                        NEXT_INDEX = CURRENT_INDEX + RANGE;
+                    }
+                    cloneCandidates.addAll(findCandidateFromBlocksOuter(methodModel, key, threshold));
+                }
+
+                fileFlag = 1;
+            }
+        }
+
+        if (threshold < maxRange) {
+            List<ClonePair> merged = new ArrayList<>(findClonePair(cloneCandidates));
+            merged.addAll(findCandidatesBetweenClass(entry, threshold + 1, files));
+            return merged;
+        }
+        else
+            return findClonePair(cloneCandidates);
+    }
+
+    private CloneCandidate buildNewCandidate(MethodModel methodModel, String path, int CURRENT_INDEX, int NEXT_INDEX) {
+        return CloneCandidate.builder()
+                .methodModel(methodModel)
+                .statements(methodModel.getStatements().subList(CURRENT_INDEX, NEXT_INDEX))
+                .path(path)
+                .flag(0)
+                .build();
+    }
+
+    private List<ClonePair> filterClonePairMemberCount(List<ClonePair> clonePairs) {
+        return clonePairs.stream()
+                .filter(clonePair -> clonePair.getCloneCandidates().size() > 2)
+                .collect(Collectors.toList());
+    }
+
+    private List<CloneCandidate> findCandidateFromBlocksOuter(MethodModel methodModel, String path, Long threshold) {
         List<CloneCandidate> mergedCandidate = new ArrayList<>();
         for (StatementModel statementModel : methodModel.getStatements()) {
             if (statementModel instanceof BlockModel) {
-                mergedCandidate.addAll(setCandidateFromBlocks((BlockModel) statementModel, methodModel, threshold));
+                mergedCandidate.addAll(setCandidateFromBlocks((BlockModel) statementModel, methodModel, path,
+                        threshold));
             }
         }
         return mergedCandidate;
     }
 
-    private List<CloneCandidate> findCandidateFromBlocksInner(BlockModel blockModel, MethodModel methodModel, Long threshold) {
+    private List<CloneCandidate> findCandidateFromBlocksInner(BlockModel blockModel, MethodModel methodModel,
+                                                              String path, Long threshold) {
         List<CloneCandidate> mergedCandidate = new ArrayList<>();
         for (StatementModel statementModel : blockModel.getStatements()) {
             if (statementModel instanceof BlockModel) {
-                mergedCandidate.addAll(setCandidateFromBlocks((BlockModel) statementModel, methodModel, threshold));
+                mergedCandidate.addAll(setCandidateFromBlocks((BlockModel) statementModel, methodModel, path,
+                        threshold));
             }
         }
         return mergedCandidate;
     }
 
-    private List<CloneCandidate> setCandidateFromBlocks(BlockModel blockModel, MethodModel methodModel, Long threshold) {
+    private List<CloneCandidate> setCandidateFromBlocks(BlockModel blockModel, MethodModel methodModel,
+                                                        String path, Long threshold) {
         List<CloneCandidate> cloneCandidates = new ArrayList<>();
-        int CURRENT_INDEX = 0;
+        CloneCandidate cloneCandidate;
+        int CURRENT_INDEX = INITIAL_INDEX;
         int RANGE = threshold.intValue();
         int NEXT_INDEX = CURRENT_INDEX + RANGE;
 
         while (NEXT_INDEX <= blockModel.getStatements().size()) {
-            CloneCandidate cloneCandidate = CloneCandidate.builder()
-                    .methodModel(methodModel)
-                    .statements(blockModel.getStatements().subList(CURRENT_INDEX, NEXT_INDEX))
-                    .flag(0)
-                    .build();
+            cloneCandidate = buildNewCandidate(methodModel, path, CURRENT_INDEX, NEXT_INDEX);
             cloneCandidates.add(cloneCandidate);
             CURRENT_INDEX++;
             NEXT_INDEX = CURRENT_INDEX + RANGE;
         }
-        cloneCandidates.addAll(findCandidateFromBlocksInner(blockModel, methodModel, threshold));
+        cloneCandidates.addAll(findCandidateFromBlocksInner(blockModel, methodModel, path, threshold));
 
         return cloneCandidates;
     }
@@ -164,10 +216,6 @@ public class DuplicateCodeDetectionImpl implements DuplicateCodeDetection {
     }
 
     private Boolean isDuplicate(CloneCandidate cloneCandidate1, CloneCandidate cloneCandidate2) {
-//        List<List<String>> listSplitedString1 = transformToText(cloneCandidate1);
-//        List<List<String>> listSplitedString2 = transformToText(cloneCandidate2);
-//        return duplicateCodeAnalyzer.analysis(listSplitedString1, listSplitedString2) < thresholdUniqness;
-
         return duplicateCodeAnalyzer.analysis(cloneCandidate1, cloneCandidate2) < thresholdUniqness;
     }
 
